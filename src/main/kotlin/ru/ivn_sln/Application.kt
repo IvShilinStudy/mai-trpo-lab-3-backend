@@ -7,10 +7,7 @@ import ru.ivn_sln.plugins.*
 
 fun main() {
     embeddedServer(
-        Netty,
-        port = 8080,
-        host = "0.0.0.0",
-        module = Application::module
+        Netty, port = 8080, module = Application::module
     ).start(wait = true)
 }
 
