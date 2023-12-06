@@ -1,16 +1,11 @@
 package ru.ivn_sln.plugins
 
 import io.ktor.server.application.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import ru.ivn_sln.routes.OperationRoute
 
 fun Application.configureRouting() {
     routing {
-        get("/") {
-            call.respondText("Hello World!")
-        }
-        get("/testing"){
-            call.respond("Tested. OK.")
-        }
+        OperationRoute()
     }
 }
