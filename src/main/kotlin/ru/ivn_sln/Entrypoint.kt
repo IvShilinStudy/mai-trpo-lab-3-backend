@@ -9,6 +9,8 @@ import org.jetbrains.exposed.sql.Database
 
 fun main() {
     embeddedServer(
-        Netty, port = 8080, module = Application::module
+        Netty,
+        port = 8080,
+        module = Application::module
     ).start(wait = true)
 }
