@@ -15,7 +15,7 @@ group = "ru.ivn_sln"
 version = "0.0.1"
 
 application {
-    mainClass.set("ru.ivn_sln.Entrypoint.kt")
+    mainClass.set("ru.ivn_sln.EntrypointKt")
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
@@ -44,7 +44,7 @@ dependencies {
     // Koin
     implementation("io.insert-koin:koin-ktor:$koin_version")
 
-    implementation("org.postgresql:postgresql:42.2.7")
+    implementation("org.postgresql:postgresql:42.2.27")
 
     // Hikari
     implementation("com.zaxxer:HikariCP:$hikari_version")
