@@ -6,6 +6,7 @@ import ru.ivn_sln.routes.operationRoute
 
 fun Application.configureRouting() {
     routing {
+        testRoute()
         operationRoute()
     }
 }

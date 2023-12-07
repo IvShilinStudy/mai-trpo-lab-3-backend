@@ -1,29 +1,16 @@
 package ru.ivn_sln.domain.repository
 
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
-import ru.ivn_sln.data.Operation
-import ru.ivn_sln.data.tables.OperationTable
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import ru.ivn_sln.data.data_source.RenderDataSource
+import ru.ivn_sln.domain.mappers.toDomainModel
+import ru.ivn_sln.tools.resource
 
-class OperationRepositoryIml : OperationRepository {
+class OperationRepositoryIml : OperationRepository, KoinComponent {
 
-    override suspend fun fetchAllUserOperations(accountId: String): List<Operation> {
-        var list = emptyList<Operation>()
-        transaction {
-            val operationTableRequest = OperationTable.select {
-                OperationTable.account_id.eq(accountId)
-            }.toList()
+    private val dataSource : RenderDataSource by inject()
 
-            list = operationTableRequest.map { row ->
-                Operation(
-                    (row[OperationTable.operation_data])?.toEpochMilli(),
-                    row[OperationTable.sum],
-                    row[OperationTable.account_id],
-                    row[OperationTable.operation_id],
-                )
-            }
-        }
-
-        return list
+    override suspend fun fetchOperations(token: String) = resource {
+        dataSource.fetchOperations(token).toDomainModel()
     }
 }
