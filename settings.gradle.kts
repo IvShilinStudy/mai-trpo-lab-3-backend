@@ -1,1 +1,1 @@
-rootProject.name = "ru.ivn_sln.mai-trpo-lab-3-backend"
+rootProject.name = "mai-trpo-lab-3-backend"
