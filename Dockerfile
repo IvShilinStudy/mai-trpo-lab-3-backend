@@ -6,5 +6,7 @@ RUN gradle buildFatJar --no-daemon
 FROM openjdk:11
 EXPOSE 8080:8080
 RUN mkdir /app
+COPY --from=build /home/gradle/src/hikari.properties /app
+WORKDIR /app
 COPY --from=build /home/gradle/src/build/libs/*.jar /app/mai-trpo-lab-3-backend.jar
 ENTRYPOINT ["java","-jar","/app/mai-trpo-lab-3-backend.jar"]
