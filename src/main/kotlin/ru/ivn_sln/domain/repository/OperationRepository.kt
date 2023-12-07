@@ -4,5 +4,5 @@ import ru.ivn_sln.data.Operation
 
 interface OperationRepository {
 
-    suspend fun fetchAllUserOperations() : List<Operation>
+    suspend fun fetchAllUserOperations(accountId : String) : List<Operation>
 }
