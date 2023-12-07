@@ -1,11 +1,10 @@
-package ru.ivn_sln.data
+package ru.ivn_sln.domain.models
 
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Operation(
+    val operationId : Int,
     val date : Long?,
-    val sum : Int,
-    val accountId: String,
-    val operationId : Int
+    val sum : Int
 )

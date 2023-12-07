@@ -3,6 +3,7 @@ val kotlin_version: String by project
 val logback_version: String by project
 val exposed_version: String by project
 val koin_version: String by project
+val hikari_version: String by project
 
 plugins {
     kotlin("jvm") version "1.9.21"
@@ -14,7 +15,7 @@ group = "ru.ivn_sln"
 version = "0.0.1"
 
 application {
-    mainClass.set("ru.ivn_sln.ApplicationKt")
+    mainClass.set("ru.ivn_sln.Entrypoint.kt")
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
@@ -29,6 +30,8 @@ dependencies {
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
     implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("io.ktor:ktor-server-swagger:$ktor_version")
+
     implementation("ch.qos.logback:logback-classic:$logback_version")
 
     // exposed
@@ -44,7 +47,8 @@ dependencies {
     implementation("org.postgresql:postgresql:42.2.7")
 
     // Hikari
-    implementation("com.zaxxer:HikariCP:5.0.1")
+    implementation("com.zaxxer:HikariCP:$hikari_version")
+    implementation("io.ktor:ktor-server-cors-jvm:2.3.6")
 
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
