@@ -13,7 +13,8 @@ fun Route.operationRoute() {
     val repository: OperationRepository by inject()
 
     get("api/v1/operation/info") {
-        val token = call.request.headers["token"]
+        val token = call.request.headers["Token"]
+
         if (token == null) {
             call.respond(HttpStatusCode.Unauthorized, "Auth token is null. Add it to headers")
         } else {
@@ -23,6 +24,23 @@ fun Route.operationRoute() {
                 }
                 .whenSuccess { operations ->
                     call.respond(operations)
+                }
+        }
+    }
+
+    get("api/v1/operation/{operationId}/extended") {
+        val operationId = call.parameters["operationId"]?.toIntOrNull() ?: return@get
+        val token = call.request.headers["Token"]
+
+        if (token == null) {
+            call.respond(HttpStatusCode.Unauthorized, "Auth token is null. Add it to headers")
+        } else {
+            repository.fetchFullOperation(operationId)
+                .whenFailure { t ->
+                    call.respond(HttpStatusCode.BadRequest, t.message ?: "")
+                }
+                .whenSuccess { operationExtended ->
+                    call.respond(operationExtended)
                 }
         }
     }
