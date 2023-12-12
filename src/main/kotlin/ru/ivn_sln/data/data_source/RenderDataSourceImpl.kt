@@ -51,8 +51,8 @@ class RenderDataSourceImpl : RenderDataSource {
         transaction {
             addLogger(StdOutSqlLogger)
 
-            OperationTable.deleteWhere { OperationTable.operation_id.eq(operationId) }
             OperationDataTable.deleteWhere { OperationDataTable.operationId.eq(operationId) }
+            OperationTable.deleteWhere { OperationTable.operation_id.eq(operationId) }
         }
     }
 

@@ -87,4 +87,21 @@ fun Route.operationRoute() {
                 }
         }
     }
+
+    delete("api/v1/operation/{operationId}/delete") {
+        val token = call.request.headers["Token"]
+        val operationId = call.parameters["operationId"]?.toIntOrNull() ?: return@delete
+
+        if (token == null) {
+            call.respond(HttpStatusCode.Unauthorized, "Auth token is null. Add it to headers")
+        } else {
+            repository.deleteOperation(operationId)
+                .whenFailure { t ->
+                    call.respond(HttpStatusCode.BadRequest, t.message ?: "")
+                }
+                .whenSuccess {
+                    call.respond("Успешно")
+                }
+        }
+    }
 }
