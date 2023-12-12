@@ -35,7 +35,7 @@ class RenderDataSourceImpl : RenderDataSource {
             val operationRow = OperationTable
                 .join(OperationDataTable, JoinType.INNER, OperationTable.operation_id, OperationDataTable.operationId)
                 .select { OperationTable.operation_id.eq(operationId) }
-                .firstOrNull() ?: throw IllegalStateException("Problems with join OperationDataTable and OperationTable")
+                .firstOrNull() ?: throw Throwable("Проблемы с операцией")
 
             OperationExtendedResponse(
                 operationId = operationRow[OperationTable.operation_id],
