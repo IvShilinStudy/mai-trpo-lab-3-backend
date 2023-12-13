@@ -15,8 +15,8 @@ import ru.ivn_sln.tools.whenSuccess
 fun Route.operationRoute() {
     val repository: OperationRepository by inject()
 
-    get("api/v1/operation/info") {
-        val token = call.request.headers["Token"]
+    get("api/v1/{token}/operation/info") {
+        val token = call.parameters["token"]
 
         if (token == null) {
             call.respond(HttpStatusCode.Unauthorized, "Auth token is null. Add it to headers")
@@ -31,9 +31,9 @@ fun Route.operationRoute() {
         }
     }
 
-    get("api/v1/operation/{operationId}/extended") {
+    get("api/v1/{token}/operation/{operationId}/extended") {
         val operationId = call.parameters["operationId"]?.toIntOrNull() ?: return@get
-        val token = call.request.headers["Token"]
+        val token = call.parameters["token"]
 
         if (token == null) {
             call.respond(HttpStatusCode.Unauthorized, "Auth token is null. Add it to headers")
@@ -48,15 +48,16 @@ fun Route.operationRoute() {
         }
     }
 
-    post("api/v1/operation/add") {
-        val token = call.request.headers["Token"]
+    post("api/v1/{token}/operation/add") {
+        val token = call.parameters["token"]
         val data = call.receive<OperationInsertRequest>()
 
         if (token == null) {
             call.respond(HttpStatusCode.Unauthorized, "Auth token is null. Add it to headers")
         } else {
             repository.addOperation(
-                token, data
+                token,
+                data
             )
                 .whenFailure { t ->
                     call.respond(HttpStatusCode.BadRequest, t.message ?: "")
@@ -67,8 +68,8 @@ fun Route.operationRoute() {
         }
     }
 
-    post("api/v1/operation/{operationId}/replace") {
-        val token = call.request.headers["Token"]
+    post("api/v1/{token}/operation/{operationId}/replace") {
+        val token = call.parameters["token"]
         val operationId = call.parameters["operationId"]?.toIntOrNull() ?: return@post
         val data = call.receive<OperationUpdateRequest>()
 
@@ -88,8 +89,8 @@ fun Route.operationRoute() {
         }
     }
 
-    delete("api/v1/operation/{operationId}/delete") {
-        val token = call.request.headers["Token"]
+    delete("api/v1/{token}/operation/{operationId}/delete") {
+        val token = call.parameters["token"]
         val operationId = call.parameters["operationId"]?.toIntOrNull() ?: return@delete
 
         if (token == null) {
