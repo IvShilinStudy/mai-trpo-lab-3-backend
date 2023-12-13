@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class Operation(
     val operationId : Int,
     val date : Long?,
-    val sum : Int
+    val sum: Int,
 )

@@ -1,11 +1,10 @@
-package ru.ivn_sln.domain.models
+package ru.ivn_sln.data.request
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class OperationExtended(
-    val operationId: Int,
-    val date: String?,
+data class OperationUpdateRequest(
+    val date: String? = null,
     val sum: Int,
     val category: String,
     val sumOfCop: Int,
