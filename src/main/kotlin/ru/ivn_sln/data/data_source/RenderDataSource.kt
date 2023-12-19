@@ -4,6 +4,7 @@ import ru.ivn_sln.data.request.OperationInsertRequest
 import ru.ivn_sln.data.request.OperationUpdateRequest
 import ru.ivn_sln.data.response.OperationExtendedResponse
 import ru.ivn_sln.data.response.OperationResponse
+import ru.ivn_sln.data.response.RegUser
 
 interface RenderDataSource {
     suspend fun fetchOperations(token : String) : List<OperationResponse>
@@ -20,5 +21,10 @@ interface RenderDataSource {
     suspend fun changeOperation(
         operationId : Int,
         operationUpdateRequest: OperationUpdateRequest,
+    )
+
+    suspend fun regUser(
+        token: String,
+        user: RegUser,
     )
 }
