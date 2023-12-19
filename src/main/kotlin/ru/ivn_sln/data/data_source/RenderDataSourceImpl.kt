@@ -7,22 +7,23 @@ import ru.ivn_sln.data.request.OperationInsertRequest
 import ru.ivn_sln.data.request.OperationUpdateRequest
 import ru.ivn_sln.data.response.OperationExtendedResponse
 import ru.ivn_sln.data.response.OperationResponse
-import ru.ivn_sln.data.tables.OperationDataTable
-import ru.ivn_sln.data.tables.OperationTable
+import ru.ivn_sln.data.response.RegUser
+import ru.ivn_sln.data.tables.*
+import java.time.Instant
 
 class RenderDataSourceImpl : RenderDataSource {
     override suspend fun fetchOperations(token: String): List<OperationResponse> {
         return transaction {
             addLogger(StdOutSqlLogger)
 
-            OperationTable
-                .select { OperationTable.account_id.eq(token) }
+            OperationsTable
+                .select { OperationsTable.account_id.eq(token) }
                 .toList()
                 .map { row ->
                     OperationResponse(
-                        operationId = row[OperationTable.operation_id],
-                        date = row[OperationTable.operation_data].toString(),
-                        sum = row[OperationTable.sum],
+                        operationId = row[OperationsTable.operation_id],
+                        date = row[OperationsTable.operation_timestamp].toString(),
+                        sum = row[OperationsTable.sum],
                     )
                 }
         }
@@ -32,17 +33,29 @@ class RenderDataSourceImpl : RenderDataSource {
         return transaction {
             addLogger(StdOutSqlLogger)
 
-            val operationRow = OperationTable
-                .join(OperationDataTable, JoinType.INNER, OperationTable.operation_id, OperationDataTable.operationId)
-                .select { OperationTable.operation_id.eq(operationId) }
+            val operationRow = OperationsTable
+                .join(
+                    OperationsDataTable,
+                    JoinType.LEFT,
+                    OperationsTable.operation_id,
+                    OperationsDataTable.operationId
+                )
+                .join(
+                    OperationsTypeTable,
+                    JoinType.LEFT,
+                    OperationsTable.operation_id,
+                    OperationsTypeTable.operationId
+                )
+                .select { OperationsTable.operation_id.eq(operationId) }
                 .firstOrNull() ?: throw Throwable("Проблемы с операцией")
 
             OperationExtendedResponse(
-                operationId = operationRow[OperationTable.operation_id],
-                date = operationRow[OperationTable.operation_data].toString(),
-                sum = operationRow[OperationTable.sum],
-                category = operationRow[OperationDataTable.category],
-                sumOfCop = operationRow[OperationDataTable.sumOfCom],
+                operationId = operationRow[OperationsTable.operation_id],
+                date = operationRow[OperationsTable.operation_timestamp].toString(),
+                sum = operationRow[OperationsTable.sum],
+                category = operationRow[OperationsDataTable.category],
+                sumOfCop = operationRow[OperationsDataTable.sumOfCom],
+                type = operationRow[OperationsTypeTable.type],
             )
         }
     }
@@ -51,8 +64,20 @@ class RenderDataSourceImpl : RenderDataSource {
         transaction {
             addLogger(StdOutSqlLogger)
 
-            OperationDataTable.deleteWhere { OperationDataTable.operationId.eq(operationId) }
-            OperationTable.deleteWhere { OperationTable.operation_id.eq(operationId) }
+            val operationRow = OperationsTable.select {
+                OperationsTable.operation_id.eq(operationId)
+            }.firstOrNull() ?: throw Throwable("Проблемы с операцией")
+
+            OperationsTable.deleteWhere {
+                OperationsTable.operation_id.eq(operationId)
+            }
+
+            OperationsArchive.insert {
+                it[OperationsArchive.operation_id] = operationRow[OperationsTable.operation_id]
+                it[OperationsArchive.account_id] = operationRow[OperationsTable.account_id]
+                it[OperationsTable.operation_timestamp] = operationRow[OperationsTable.operation_timestamp]
+                it[OperationsArchive.sum] = operationRow[OperationsTable.sum]
+            }
         }
     }
 
@@ -63,16 +88,21 @@ class RenderDataSourceImpl : RenderDataSource {
         transaction {
             addLogger(StdOutSqlLogger)
 
-            val insertedRow = OperationTable.insert {
-                it[OperationTable.account_id] = token
-                it[OperationTable.sum] = operationInsertRequest.sum
-                it[OperationTable.operation_data] = null
+            val insertedRow = OperationsTable.insert {
+                it[OperationsTable.account_id] = token
+                it[OperationsTable.sum] = operationInsertRequest.sum
+                it[OperationsTable.operation_timestamp] = Instant.parse(operationInsertRequest.date)
             }.resultedValues?.firstOrNull() ?: throw Throwable("Не получилось добавить операцию. Попробуйте еще раз")
 
-            OperationDataTable.insert {
-                it[OperationDataTable.operationId] = insertedRow[OperationTable.operation_id]
-                it[OperationDataTable.sumOfCom] = operationInsertRequest.sumOfCop
-                it[OperationDataTable.category] = operationInsertRequest.category
+            OperationsDataTable.insert {
+                it[OperationsDataTable.operationId] = insertedRow[OperationsTable.operation_id]
+                it[OperationsDataTable.sumOfCom] = operationInsertRequest.sumOfCop
+                it[OperationsDataTable.category] = operationInsertRequest.category
+            }
+
+            OperationsTypeTable.insert {
+                it[OperationsTypeTable.operationId] = insertedRow[OperationsTable.operation_id]
+                it[OperationsTypeTable.type] = operationInsertRequest.type
             }
         }
     }
@@ -84,25 +114,41 @@ class RenderDataSourceImpl : RenderDataSource {
         transaction {
             addLogger(StdOutSqlLogger)
 
-            OperationTable.update(
+            OperationsTable.update(
                 where = {
-                    OperationTable.operation_id.eq(operationId)
+                    OperationsTable.operation_id.eq(operationId)
                 },
                 body = {
-                    it[OperationTable.operation_data] = null
-                    it[OperationTable.sum] = operationUpdateRequest.sum
+                    it[OperationsTable.operation_timestamp] = Instant.parse(operationUpdateRequest.date)
+                    it[OperationsTable.sum] = operationUpdateRequest.sum
                 }
             )
 
-            OperationDataTable.update(
+            OperationsDataTable.update(
                 where = {
-                    OperationDataTable.operationId.eq(operationId)
+                    OperationsDataTable.operationId.eq(operationId)
                 },
                 body = {
-                    it[OperationDataTable.sumOfCom] = operationUpdateRequest.sumOfCop
-                    it[OperationDataTable.category] = operationUpdateRequest.category
+                    it[OperationsDataTable.sumOfCom] = operationUpdateRequest.sumOfCop
+                    it[OperationsDataTable.category] = operationUpdateRequest.category
                 }
             )
+        }
+    }
+
+    override suspend fun regUser(
+        token: String,
+        user: RegUser,
+    ) {
+        transaction {
+            addLogger(StdOutSqlLogger)
+
+            UsersTable.insert {
+                it[accountId] = token
+                it[firstName] = user.firstName
+                it[lastName] = user.lastName
+                it[phone] = user.phone
+            }
         }
     }
 }

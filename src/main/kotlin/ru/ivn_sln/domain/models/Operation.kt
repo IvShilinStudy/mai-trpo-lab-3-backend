@@ -5,6 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Operation(
     val operationId : Int,
-    val date : Long?,
+    val date : String,
     val sum: Int,
 )

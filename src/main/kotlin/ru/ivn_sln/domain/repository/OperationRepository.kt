@@ -2,6 +2,7 @@ package ru.ivn_sln.domain.repository
 
 import ru.ivn_sln.data.request.OperationInsertRequest
 import ru.ivn_sln.data.request.OperationUpdateRequest
+import ru.ivn_sln.data.response.RegUser
 import ru.ivn_sln.domain.models.Operation
 import ru.ivn_sln.domain.models.OperationExtended
 import ru.ivn_sln.tools.Resource
@@ -23,4 +24,9 @@ interface OperationRepository {
         operationId: Int,
         operationUpdateRequest: OperationUpdateRequest,
     ): Resource<Unit>
+
+    suspend fun registrateUser(
+        token: String,
+        userInfo: RegUser,
+    ) : Resource<Unit>
 }

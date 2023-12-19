@@ -8,7 +8,7 @@ import ru.ivn_sln.domain.models.OperationExtended
 fun OperationResponse.toDomainModel() =
     Operation(
         operationId = operationId,
-        date = null,
+        date = date,
         sum = sum,
     )
 
@@ -18,8 +18,9 @@ fun List<OperationResponse>.toDomainModel() =
 fun OperationExtendedResponse.toDomainModel() =
     OperationExtended(
         operationId = operationId,
-        date = null,
+        date = date,
         sum = sum,
         category = category,
         sumOfCop = sumOfCop,
+        type = type,
     )

@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class OperationUpdateRequest(
-    val date: String? = null,
+    val date: String,
     val sum: Int,
     val category: String,
     val sumOfCop: Int,

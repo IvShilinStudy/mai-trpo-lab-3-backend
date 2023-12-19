@@ -5,6 +5,7 @@ import org.koin.core.component.inject
 import ru.ivn_sln.data.data_source.RenderDataSource
 import ru.ivn_sln.data.request.OperationInsertRequest
 import ru.ivn_sln.data.request.OperationUpdateRequest
+import ru.ivn_sln.data.response.RegUser
 import ru.ivn_sln.domain.mappers.toDomainModel
 import ru.ivn_sln.tools.resource
 
@@ -41,6 +42,16 @@ class OperationRepositoryIml : OperationRepository, KoinComponent {
         dataSource.changeOperation(
             operationId,
             operationUpdateRequest
+        )
+    }
+
+    override suspend fun registrateUser(
+        token: String,
+        userInfo: RegUser
+    ) = resource {
+        dataSource.regUser(
+            token,
+            userInfo,
         )
     }
 }
