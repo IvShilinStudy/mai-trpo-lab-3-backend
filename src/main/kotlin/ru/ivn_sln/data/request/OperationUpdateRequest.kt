@@ -8,4 +8,5 @@ data class OperationUpdateRequest(
     val sum: Int,
     val category: String,
     val sumOfCop: Int,
+    val type: String,
 )

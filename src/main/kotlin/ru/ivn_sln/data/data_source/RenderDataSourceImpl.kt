@@ -133,6 +133,14 @@ class RenderDataSourceImpl : RenderDataSource {
                     it[OperationsDataTable.category] = operationUpdateRequest.category
                 }
             )
+
+            OperationsTypeTable.update(
+                where = {
+                    OperationsTypeTable.operationId.eq(operationId)
+                }, body = {
+                    it[OperationsTypeTable.type] = operationUpdateRequest.type
+                }
+            )
         }
     }
 
