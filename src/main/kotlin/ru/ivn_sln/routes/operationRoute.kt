@@ -8,6 +8,7 @@ import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 import ru.ivn_sln.data.request.OperationInsertRequest
 import ru.ivn_sln.data.request.OperationUpdateRequest
+import ru.ivn_sln.data.request.ReportCreateRequest
 import ru.ivn_sln.data.response.RegUser
 import ru.ivn_sln.domain.repository.OperationRepository
 import ru.ivn_sln.tools.whenFailure
@@ -123,6 +124,26 @@ fun Route.operationRoute() {
                 }
                 .whenSuccess {
                     call.respond("Успешно!")
+                }
+        }
+    }
+
+    post("api/v1/{token}/report") {
+        val token = call.parameters["token"]
+        val data = call.receive<ReportCreateRequest>()
+
+        if (token == null) {
+            call.respond(HttpStatusCode.Unauthorized, "Auth token is null. Add it to headers")
+        } else {
+            repository.createReport(
+                token,
+                data
+            )
+                .whenFailure { t ->
+                    call.respond(HttpStatusCode.BadRequest, t.message ?: "")
+                }
+                .whenSuccess { report ->
+                    call.respond(report)
                 }
         }
     }

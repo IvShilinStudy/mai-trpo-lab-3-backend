@@ -2,6 +2,7 @@ package ru.ivn_sln.domain.repository
 
 import ru.ivn_sln.data.request.OperationInsertRequest
 import ru.ivn_sln.data.request.OperationUpdateRequest
+import ru.ivn_sln.data.request.ReportCreateRequest
 import ru.ivn_sln.data.response.RegUser
 import ru.ivn_sln.domain.models.Operation
 import ru.ivn_sln.domain.models.OperationExtended
@@ -28,5 +29,10 @@ interface OperationRepository {
     suspend fun registrateUser(
         token: String,
         userInfo: RegUser,
+    ) : Resource<Unit>
+
+    suspend fun createReport(
+        token : String,
+        reportCreateRequest: ReportCreateRequest,
     ) : Resource<Unit>
 }

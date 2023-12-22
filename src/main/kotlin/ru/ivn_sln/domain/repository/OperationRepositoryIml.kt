@@ -5,6 +5,7 @@ import org.koin.core.component.inject
 import ru.ivn_sln.data.data_source.RenderDataSource
 import ru.ivn_sln.data.request.OperationInsertRequest
 import ru.ivn_sln.data.request.OperationUpdateRequest
+import ru.ivn_sln.data.request.ReportCreateRequest
 import ru.ivn_sln.data.response.RegUser
 import ru.ivn_sln.domain.CalculateOperationSumOfComUseCase
 import ru.ivn_sln.domain.mappers.toDomainModel
@@ -62,5 +63,38 @@ class OperationRepositoryIml : OperationRepository, KoinComponent {
             operationId,
             operationUpdate
         )
+    }
+
+    override suspend fun createReport(
+        token: String,
+        reportCreateRequest: ReportCreateRequest
+    ) = resource {
+        val reportCreate = reportCreateRequest.toDomainModel()
+        val typeId = reportCreate.typeId
+        val categoryId = reportCreate.categoryId
+
+
+
+        when {
+            typeId != null && categoryId == null -> {
+                dataSource.createReportFromType(
+                    token =  token,
+                    typeId =  typeId,
+                    fromDate = reportCreate.fromDate,
+                    toDate = reportCreate.toDate
+                )
+            }
+            categoryId != null && typeId == null -> {
+                dataSource.createReportFromCategory(
+                    token =  token,
+                    categoryId =  categoryId,
+                    fromDate = reportCreate.fromDate,
+                    toDate = reportCreate.toDate,
+                )
+            }
+            else -> {
+                throw Throwable("Проверьте ваш запрос")
+            }
+        }
     }
 }

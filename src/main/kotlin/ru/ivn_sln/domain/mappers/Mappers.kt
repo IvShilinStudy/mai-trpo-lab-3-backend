@@ -2,6 +2,7 @@ package ru.ivn_sln.domain.mappers
 
 import ru.ivn_sln.data.request.OperationInsertRequest
 import ru.ivn_sln.data.request.OperationUpdateRequest
+import ru.ivn_sln.data.request.ReportCreateRequest
 import ru.ivn_sln.data.response.OperationCategoryResponse
 import ru.ivn_sln.data.response.OperationExtendedResponse
 import ru.ivn_sln.data.response.OperationResponse
@@ -50,4 +51,11 @@ fun OperationUpdateRequest.toDomainModel() = OperationUpdate(
     sum = sum,
     categoryId = categoryId,
     typeId = typeId,
+)
+
+fun ReportCreateRequest.toDomainModel() = ReportCreate(
+    typeId = typeId,
+    categoryId = categoryId,
+    fromDate = Instant.parse(fromDateString),
+    toDate = Instant.parse(toDateString)
 )

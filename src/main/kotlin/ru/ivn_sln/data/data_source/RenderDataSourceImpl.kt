@@ -3,13 +3,12 @@ package ru.ivn_sln.data.data_source
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import ru.ivn_sln.data.request.OperationInsertRequest
-import ru.ivn_sln.data.request.OperationUpdateRequest
 import ru.ivn_sln.data.response.*
 import ru.ivn_sln.data.tables.*
 import ru.ivn_sln.domain.models.OperationInsert
 import ru.ivn_sln.domain.models.OperationUpdate
 import java.time.Instant
+import kotlin.math.roundToInt
 
 class RenderDataSourceImpl : RenderDataSource {
     override suspend fun fetchOperations(token: String): List<OperationResponse> {
@@ -137,6 +136,154 @@ class RenderDataSourceImpl : RenderDataSource {
                 it[firstName] = user.firstName
                 it[lastName] = user.lastName
                 it[phone] = user.phone
+            }
+        }
+    }
+
+    override suspend fun createReportFromType(
+        token: String,
+        typeId: Int,
+        fromDate: Instant,
+        toDate: Instant
+    ) {
+        transaction {
+            val operations = OperationsTable
+                .join(
+                    OperationsCategoryTable,
+                    JoinType.LEFT,
+                    OperationsTable.categoryId,
+                    OperationsCategoryTable.id,
+                )
+                .join(
+                    OperationsTypeTable,
+                    JoinType.LEFT,
+                    OperationsTable.typeId,
+                    OperationsTypeTable.id,
+                )
+                .select {
+                    OperationsTable.accountId
+                        .eq(token)
+                        .and { OperationsTypeTable.id.eq(typeId) }
+                        .and { OperationsTable.operationTimestamp.between(fromDate, toDate) }
+                }
+                .toList()
+                .map { resultRow ->
+                    OperationExtendedResponse(
+                        operationId = resultRow[OperationsTable.operation_id],
+                        date = resultRow[OperationsTable.operationTimestamp].toString(),
+                        sum = resultRow[OperationsTable.sum],
+                        category = OperationCategoryResponse(
+                            id = resultRow[OperationsCategoryTable.id],
+                            name = resultRow[OperationsCategoryTable.name],
+                            coeff = resultRow[OperationsCategoryTable.coeff]
+                        ),
+                        type = OperationTypeResponse(
+                            id = resultRow[OperationsTypeTable.id],
+                            name = resultRow[OperationsTypeTable.name],
+                            coeff = resultRow[OperationsTypeTable.coeff]
+                        ),
+                    )
+                }
+
+            val count = operations.count()
+
+            val averageSum = operations.sumOf { it.sum } / count
+
+            val sumOfComMap = mutableMapOf<Int, Int>()
+
+            operations.forEach { operation ->
+                val typeCoeff = operation.type.coeff
+                val categoryCoeff = operation.category.coeff
+                val finallyCoeff = typeCoeff * categoryCoeff
+                val sumOfComForOperation = (operation.sum * finallyCoeff).roundToInt()
+
+                sumOfComMap[operation.operationId] = sumOfComForOperation
+            }
+
+            val maxSumOfComPair = sumOfComMap.maxBy { it.value }.toPair()
+            val minSumOfComPair = sumOfComMap.minBy { it.value }.toPair()
+
+            OperationsReports.insert {
+                it[accountId] = token
+                it[this.averageSum] = averageSum
+                it[mostProfitableOperationId] = maxSumOfComPair.first
+                it[leastProfitableOperationId] = minSumOfComPair.first
+                it[this.fromDate] = fromDate
+                it[this.toDate] = toDate
+                it[operationsCount] = count
+            }
+        }
+    }
+
+    override suspend fun createReportFromCategory(
+        token: String,
+        categoryId: Int,
+        fromDate: Instant,
+        toDate: Instant
+    ) {
+        transaction {
+            val operations = OperationsTable
+                .join(
+                    OperationsCategoryTable,
+                    JoinType.LEFT,
+                    OperationsTable.categoryId,
+                    OperationsCategoryTable.id,
+                )
+                .join(
+                    OperationsTypeTable,
+                    JoinType.LEFT,
+                    OperationsTable.typeId,
+                    OperationsTypeTable.id,
+                )
+                .select {
+                    OperationsTable.accountId
+                        .eq(token)
+                        .and { OperationsTypeTable.id.eq(categoryId) }
+                        .and { OperationsTable.operationTimestamp.between(fromDate, toDate) }
+                }
+                .toList()
+                .map { resultRow ->
+                    OperationExtendedResponse(
+                        operationId = resultRow[OperationsTable.operation_id],
+                        date = resultRow[OperationsTable.operationTimestamp].toString(),
+                        sum = resultRow[OperationsTable.sum],
+                        category = OperationCategoryResponse(
+                            id = resultRow[OperationsCategoryTable.id],
+                            name = resultRow[OperationsCategoryTable.name],
+                            coeff = resultRow[OperationsCategoryTable.coeff]
+                        ),
+                        type = OperationTypeResponse(
+                            id = resultRow[OperationsTypeTable.id],
+                            name = resultRow[OperationsTypeTable.name],
+                            coeff = resultRow[OperationsTypeTable.coeff]
+                        ),
+                    )
+                }
+
+            val count = operations.count()
+            val averageSum = operations.sumOf { it.sum } / count
+            val sumOfComMap = mutableMapOf<Int, Int>()
+
+            operations.forEach { operation ->
+                val typeCoeff = operation.type.coeff
+                val categoryCoeff = operation.category.coeff
+                val finallyCoeff = typeCoeff * categoryCoeff
+                val sumOfComForOperation = (operation.sum * finallyCoeff).roundToInt()
+
+                sumOfComMap[operation.operationId] = sumOfComForOperation
+            }
+
+            val maxSumOfComPair = sumOfComMap.maxBy { it.value }.toPair()
+            val minSumOfComPair = sumOfComMap.minBy { it.value }.toPair()
+
+            OperationsReports.insert {
+                it[accountId] = token
+                it[this.averageSum] = averageSum
+                it[mostProfitableOperationId] = maxSumOfComPair.first
+                it[leastProfitableOperationId] = minSumOfComPair.first
+                it[this.fromDate] = fromDate
+                it[this.toDate] = toDate
+                it[operationsCount] = count
             }
         }
     }
