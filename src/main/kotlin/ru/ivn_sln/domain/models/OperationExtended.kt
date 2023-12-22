@@ -7,7 +7,7 @@ data class OperationExtended(
     val operationId: Int,
     val date: String,
     val sum: Int,
-    val category: String?,
-    val sumOfCop: Int?,
-    val type: String?,
+    val category: OperationCategory,
+    val type: OperationType,
+    val sumOfCop: Int,
 )

@@ -4,7 +4,7 @@ import org.jetbrains.exposed.sql.Table
 
 object UsersTable : Table("users") {
     val accountId = UsersTable
-        .varchar("account_id", 100)
+        .varchar("token", 100)
     val firstName = UsersTable
         .varchar("first_name", 50)
     val lastName = UsersTable

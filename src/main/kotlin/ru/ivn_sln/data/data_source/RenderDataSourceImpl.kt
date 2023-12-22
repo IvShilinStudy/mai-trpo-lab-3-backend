@@ -3,13 +3,12 @@ package ru.ivn_sln.data.data_source
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import ru.ivn_sln.data.request.OperationInsertRequest
-import ru.ivn_sln.data.request.OperationUpdateRequest
-import ru.ivn_sln.data.response.OperationExtendedResponse
-import ru.ivn_sln.data.response.OperationResponse
-import ru.ivn_sln.data.response.RegUser
+import ru.ivn_sln.data.response.*
 import ru.ivn_sln.data.tables.*
+import ru.ivn_sln.domain.models.OperationInsert
+import ru.ivn_sln.domain.models.OperationUpdate
 import java.time.Instant
+import kotlin.math.roundToInt
 
 class RenderDataSourceImpl : RenderDataSource {
     override suspend fun fetchOperations(token: String): List<OperationResponse> {
@@ -17,45 +16,52 @@ class RenderDataSourceImpl : RenderDataSource {
             addLogger(StdOutSqlLogger)
 
             OperationsTable
-                .select { OperationsTable.account_id.eq(token) }
+                .select { OperationsTable.accountId.eq(token) }
                 .toList()
                 .map { row ->
                     OperationResponse(
                         operationId = row[OperationsTable.operation_id],
-                        date = row[OperationsTable.operation_timestamp].toString(),
+                        date = row[OperationsTable.operationTimestamp].toString(),
                         sum = row[OperationsTable.sum],
                     )
                 }
         }
     }
 
-    override suspend fun fetchOperationsData(operationId: Int) : OperationExtendedResponse {
+    override suspend fun fetchOperationsData(operationId: Int): OperationExtendedResponse {
         return transaction {
             addLogger(StdOutSqlLogger)
 
-            val operationRow = OperationsTable
+            val operationExtendedRaw = OperationsTable
                 .join(
-                    OperationsDataTable,
+                    OperationsCategoryTable,
                     JoinType.LEFT,
-                    OperationsTable.operation_id,
-                    OperationsDataTable.operationId
+                    OperationsTable.categoryId,
+                    OperationsCategoryTable.id,
                 )
                 .join(
                     OperationsTypeTable,
                     JoinType.LEFT,
-                    OperationsTable.operation_id,
-                    OperationsTypeTable.operationId
+                    OperationsTable.typeId,
+                    OperationsTypeTable.id,
                 )
                 .select { OperationsTable.operation_id.eq(operationId) }
                 .firstOrNull() ?: throw Throwable("Проблемы с операцией")
 
             OperationExtendedResponse(
-                operationId = operationRow[OperationsTable.operation_id],
-                date = operationRow[OperationsTable.operation_timestamp].toString(),
-                sum = operationRow[OperationsTable.sum],
-                category = operationRow[OperationsDataTable.category],
-                sumOfCop = operationRow[OperationsDataTable.sumOfCom],
-                type = operationRow[OperationsTypeTable.type],
+                operationId = operationExtendedRaw[OperationsTable.operation_id],
+                date = operationExtendedRaw[OperationsTable.operationTimestamp].toString(),
+                sum = operationExtendedRaw[OperationsTable.sum],
+                category = OperationCategoryResponse(
+                    id = operationExtendedRaw[OperationsCategoryTable.id],
+                    name = operationExtendedRaw[OperationsCategoryTable.name],
+                    coeff = operationExtendedRaw[OperationsCategoryTable.coeff]
+                ),
+                type = OperationTypeResponse(
+                    id = operationExtendedRaw[OperationsTypeTable.id],
+                    name = operationExtendedRaw[OperationsTypeTable.name],
+                    coeff = operationExtendedRaw[OperationsTypeTable.coeff]
+                ),
             )
         }
     }
@@ -69,47 +75,38 @@ class RenderDataSourceImpl : RenderDataSource {
             }.firstOrNull() ?: throw Throwable("Проблемы с операцией")
 
             OperationsTable.deleteWhere {
-                OperationsTable.operation_id.eq(operationId)
+                operation_id.eq(operationId)
             }
 
             OperationsArchive.insert {
-                it[OperationsArchive.operation_id] = operationRow[OperationsTable.operation_id]
-                it[OperationsArchive.account_id] = operationRow[OperationsTable.account_id]
-                it[OperationsTable.operation_timestamp] = operationRow[OperationsTable.operation_timestamp]
-                it[OperationsArchive.sum] = operationRow[OperationsTable.sum]
+                it[operation_id] = operationRow[OperationsTable.operation_id]
+                it[account_id] = operationRow[OperationsTable.accountId]
+                it[operation_timestamp] = operationRow[OperationsTable.operationTimestamp]
+                it[sum] = operationRow[OperationsTable.sum]
             }
         }
     }
 
     override suspend fun insertNewOperation(
         token : String,
-        operationInsertRequest: OperationInsertRequest
+        operationInsert: OperationInsert
     ) {
         transaction {
             addLogger(StdOutSqlLogger)
 
-            val insertedRow = OperationsTable.insert {
-                it[OperationsTable.account_id] = token
-                it[OperationsTable.sum] = operationInsertRequest.sum
-                it[OperationsTable.operation_timestamp] = Instant.parse(operationInsertRequest.date)
-            }.resultedValues?.firstOrNull() ?: throw Throwable("Не получилось добавить операцию. Попробуйте еще раз")
-
-            OperationsDataTable.insert {
-                it[OperationsDataTable.operationId] = insertedRow[OperationsTable.operation_id]
-                it[OperationsDataTable.sumOfCom] = operationInsertRequest.sumOfCop
-                it[OperationsDataTable.category] = operationInsertRequest.category
-            }
-
-            OperationsTypeTable.insert {
-                it[OperationsTypeTable.operationId] = insertedRow[OperationsTable.operation_id]
-                it[OperationsTypeTable.type] = operationInsertRequest.type
+            OperationsTable.insert {
+                it[accountId] = token
+                it[sum] = operationInsert.sum
+                it[operationTimestamp] = operationInsert.date
+                it[typeId] = operationInsert.typeId
+                it[categoryId] = operationInsert.categoryId
             }
         }
     }
 
     override suspend fun changeOperation(
         operationId : Int,
-        operationUpdateRequest: OperationUpdateRequest
+        operationUpdate: OperationUpdate
     ) {
         transaction {
             addLogger(StdOutSqlLogger)
@@ -119,26 +116,9 @@ class RenderDataSourceImpl : RenderDataSource {
                     OperationsTable.operation_id.eq(operationId)
                 },
                 body = {
-                    it[OperationsTable.operation_timestamp] = Instant.parse(operationUpdateRequest.date)
-                    it[OperationsTable.sum] = operationUpdateRequest.sum
-                }
-            )
-
-            OperationsDataTable.update(
-                where = {
-                    OperationsDataTable.operationId.eq(operationId)
-                },
-                body = {
-                    it[OperationsDataTable.sumOfCom] = operationUpdateRequest.sumOfCop
-                    it[OperationsDataTable.category] = operationUpdateRequest.category
-                }
-            )
-
-            OperationsTypeTable.update(
-                where = {
-                    OperationsTypeTable.operationId.eq(operationId)
-                }, body = {
-                    it[OperationsTypeTable.type] = operationUpdateRequest.type
+                    it[sum] = operationUpdate.sum
+                    it[typeId] = operationUpdate.typeId
+                    it[categoryId] = operationUpdate.categoryId
                 }
             )
         }
@@ -157,6 +137,168 @@ class RenderDataSourceImpl : RenderDataSource {
                 it[lastName] = user.lastName
                 it[phone] = user.phone
             }
+        }
+    }
+
+    override suspend fun createReportFromType(
+        token: String,
+        typeId: Int,
+        fromDate: Instant,
+        toDate: Instant
+    ) : ReportInfo{
+        return transaction {
+            val operations = OperationsTable
+                .join(
+                    OperationsCategoryTable,
+                    JoinType.LEFT,
+                    OperationsTable.categoryId,
+                    OperationsCategoryTable.id,
+                )
+                .join(
+                    OperationsTypeTable,
+                    JoinType.LEFT,
+                    OperationsTable.typeId,
+                    OperationsTypeTable.id,
+                )
+                .select {
+                    OperationsTable.accountId
+                        .eq(token)
+                        .and { OperationsTypeTable.id.eq(typeId) }
+                        .and { OperationsTable.operationTimestamp.between(fromDate, toDate) }
+                }
+                .toList()
+                .map { resultRow ->
+                    OperationExtendedResponse(
+                        operationId = resultRow[OperationsTable.operation_id],
+                        date = resultRow[OperationsTable.operationTimestamp].toString(),
+                        sum = resultRow[OperationsTable.sum],
+                        category = OperationCategoryResponse(
+                            id = resultRow[OperationsCategoryTable.id],
+                            name = resultRow[OperationsCategoryTable.name],
+                            coeff = resultRow[OperationsCategoryTable.coeff]
+                        ),
+                        type = OperationTypeResponse(
+                            id = resultRow[OperationsTypeTable.id],
+                            name = resultRow[OperationsTypeTable.name],
+                            coeff = resultRow[OperationsTypeTable.coeff]
+                        ),
+                    )
+                }
+
+            val count = operations.count()
+
+            val averageSum = operations.sumOf { it.sum } / count
+
+            val sumOfComMap = mutableMapOf<Int, Int>()
+
+            operations.forEach { operation ->
+                val typeCoeff = operation.type.coeff
+                val categoryCoeff = operation.category.coeff
+                val finallyCoeff = typeCoeff * categoryCoeff
+                val sumOfComForOperation = (operation.sum * finallyCoeff).roundToInt()
+
+                sumOfComMap[operation.operationId] = sumOfComForOperation
+            }
+
+            val maxSumOfComPair = sumOfComMap.maxBy { it.value }.toPair()
+            val minSumOfComPair = sumOfComMap.minBy { it.value }.toPair()
+
+            OperationsReports.insert {
+                it[accountId] = token
+                it[this.averageSum] = averageSum
+                it[mostProfitableOperationId] = maxSumOfComPair.first
+                it[leastProfitableOperationId] = minSumOfComPair.first
+                it[this.fromDate] = fromDate
+                it[this.toDate] = toDate
+                it[operationsCount] = count
+            }
+
+            ReportInfo(
+                averageSum = averageSum,
+                mostProfitableOperationId = maxSumOfComPair.first,
+                leastProfitableOperationId = minSumOfComPair.first,
+                count = count
+            )
+        }
+    }
+
+    override suspend fun createReportFromCategory(
+        token: String,
+        categoryId: Int,
+        fromDate: Instant,
+        toDate: Instant
+    ) : ReportInfo{
+        return transaction {
+            val operations = OperationsTable
+                .join(
+                    OperationsCategoryTable,
+                    JoinType.LEFT,
+                    OperationsTable.categoryId,
+                    OperationsCategoryTable.id,
+                )
+                .join(
+                    OperationsTypeTable,
+                    JoinType.LEFT,
+                    OperationsTable.typeId,
+                    OperationsTypeTable.id,
+                )
+                .select {
+                    OperationsTable.accountId
+                        .eq(token)
+                        .and { OperationsTypeTable.id.eq(categoryId) }
+                        .and { OperationsTable.operationTimestamp.between(fromDate, toDate) }
+                }
+                .toList()
+                .map { resultRow ->
+                    OperationExtendedResponse(
+                        operationId = resultRow[OperationsTable.operation_id],
+                        date = resultRow[OperationsTable.operationTimestamp].toString(),
+                        sum = resultRow[OperationsTable.sum],
+                        category = OperationCategoryResponse(
+                            id = resultRow[OperationsCategoryTable.id],
+                            name = resultRow[OperationsCategoryTable.name],
+                            coeff = resultRow[OperationsCategoryTable.coeff]
+                        ),
+                        type = OperationTypeResponse(
+                            id = resultRow[OperationsTypeTable.id],
+                            name = resultRow[OperationsTypeTable.name],
+                            coeff = resultRow[OperationsTypeTable.coeff]
+                        ),
+                    )
+                }
+
+            val count = operations.count()
+            val averageSum = operations.sumOf { it.sum } / count
+            val sumOfComMap = mutableMapOf<Int, Int>()
+
+            operations.forEach { operation ->
+                val typeCoeff = operation.type.coeff
+                val categoryCoeff = operation.category.coeff
+                val finallyCoeff = typeCoeff * categoryCoeff
+                val sumOfComForOperation = (operation.sum * finallyCoeff).roundToInt()
+
+                sumOfComMap[operation.operationId] = sumOfComForOperation
+            }
+
+            val maxSumOfComPair = sumOfComMap.maxBy { it.value }.toPair()
+            val minSumOfComPair = sumOfComMap.minBy { it.value }.toPair()
+
+            OperationsReports.insert {
+                it[accountId] = token
+                it[this.averageSum] = averageSum
+                it[mostProfitableOperationId] = maxSumOfComPair.first
+                it[leastProfitableOperationId] = minSumOfComPair.first
+                it[this.fromDate] = fromDate
+                it[this.toDate] = toDate
+                it[operationsCount] = count
+            }
+
+            ReportInfo(
+                averageSum = averageSum,
+                mostProfitableOperationId = maxSumOfComPair.first,
+                leastProfitableOperationId = minSumOfComPair.first,
+                count = count
+            )
         }
     }
 }

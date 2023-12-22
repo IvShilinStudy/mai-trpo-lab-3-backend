@@ -7,15 +7,25 @@ object OperationsTable : Table("operations") {
     val operation_id = OperationsTable
         .integer("operation_id")
         .autoIncrement()
-    val account_id = OperationsTable
+    val accountId = OperationsTable
         .reference(
             name = "account_id",
             refColumn = UsersTable.accountId,
         )
-    val operation_timestamp = OperationsTable
+    val operationTimestamp = OperationsTable
         .timestamp("operation_datetime")
     val sum = OperationsTable
         .integer("sum")
+    val typeId = OperationsTable
+        .reference(
+            name = "type_id",
+            refColumn = OperationsTypeTable.id,
+        )
+    val categoryId = OperationsTable
+        .reference(
+            name = "category_id",
+            refColumn = OperationsCategoryTable.id,
+        )
 
-    override val primaryKey = PrimaryKey(operation_id)
+        override val primaryKey = PrimaryKey(operation_id)
 }
