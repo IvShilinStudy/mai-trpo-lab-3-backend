@@ -4,18 +4,15 @@ import org.jetbrains.exposed.sql.Table
 
 object OperationsTypeTable : Table("operations_type") {
     val id = OperationsTypeTable
-        .integer("id")
+        .integer("type_id")
         .autoIncrement()
-    val operationId = OperationsTypeTable
-        .reference(
-            "operation_id",
-            OperationsTable.operation_id
-        )
-    val type = OperationsTypeTable
+    val name = OperationsTypeTable
         .varchar(
-            "type",
-            50,
+            "type_name",
+            100
         )
+   val coeff = OperationsTypeTable
+       .double("type_coeff")
 
-    override val primaryKey = PrimaryKey(operationId)
+    override val primaryKey = PrimaryKey(id)
 }

@@ -126,26 +126,4 @@ fun Route.operationRoute() {
                 }
         }
     }
-
-    get("api/v1/recept/{token}/{type}/{date}"){
-        val token = call.parameters["token"]
-        val type = call.parameters["type"] ?: return@get
-        val date = call.parameters["date"] ?: return@get
-
-        if (token == null){
-            call.respond(HttpStatusCode.Unauthorized, "Auth token is null. Add it to headers")
-        } else {
-            repository.recept(
-                token,
-                type,
-                date
-            )
-                .whenFailure { t ->
-                    call.respond(HttpStatusCode.BadRequest, t.message ?: "")
-                }
-                .whenSuccess { list ->
-                    call.respond(list)
-                }
-        }
-    }
 }

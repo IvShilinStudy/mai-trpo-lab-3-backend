@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 data class OperationInsertRequest(
     val date: String,
     val sum: Int,
-    val category: String,
-    val sumOfCop: Int,
-    val type: String,
+    val categoryId: Int,
+    val typeId: Int,
 )
