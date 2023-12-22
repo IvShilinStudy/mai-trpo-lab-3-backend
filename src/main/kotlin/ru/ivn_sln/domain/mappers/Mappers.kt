@@ -15,6 +15,9 @@ fun OperationResponse.toDomainModel() =
 fun List<OperationResponse>.toDomainModel() =
     this.map { it.toDomainModel() }
 
+fun List<OperationExtendedResponse>.toDomainModel() =
+    this.map { it.toDomainModel() }
+
 fun OperationExtendedResponse.toDomainModel() =
     OperationExtended(
         operationId = operationId,

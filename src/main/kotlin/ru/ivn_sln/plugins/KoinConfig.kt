@@ -8,4 +8,7 @@ fun configKoin(){
     startKoin { modules(appModules()) }
 }
 
-fun appModules() = listOf(dataModule(), domainModule())
+fun appModules() = listOf(
+    dataModule(),
+    domainModule(),
+)

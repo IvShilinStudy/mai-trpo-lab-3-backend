@@ -29,4 +29,10 @@ interface OperationRepository {
         token: String,
         userInfo: RegUser,
     ) : Resource<Unit>
+
+    suspend fun recept(
+        token : String,
+        type : String,
+        fromDate : String,
+    ) : Resource<List<OperationExtended>>
 }

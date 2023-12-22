@@ -54,4 +54,16 @@ class OperationRepositoryIml : OperationRepository, KoinComponent {
             userInfo,
         )
     }
+
+    override suspend fun recept(
+        token: String,
+        type: String,
+        fromDate: String
+    ) = resource {
+        dataSource.getOperationsExtended(
+            token,
+            type,
+            fromDate
+        ).toDomainModel()
+    }
 }

@@ -159,4 +159,36 @@ class RenderDataSourceImpl : RenderDataSource {
             }
         }
     }
+
+    override suspend fun getOperationsExtended(token: String, type: String, fromDate: String): List<OperationExtendedResponse> {
+        return transaction {
+            addLogger(StdOutSqlLogger)
+
+            OperationsTable
+                .join(
+                    OperationsDataTable,
+                    JoinType.LEFT,
+                    OperationsTable.operation_id,
+                    OperationsDataTable.operationId
+                )
+                .join(
+                    OperationsTypeTable,
+                    JoinType.LEFT,
+                    OperationsTable.operation_id,
+                    OperationsTypeTable.operationId
+                )
+                .select { OperationsTable.account_id.eq(token) }
+                .toList()
+                .map { operationRow ->
+                    OperationExtendedResponse(
+                        operationId = operationRow[OperationsTable.operation_id],
+                        date = operationRow[OperationsTable.operation_timestamp].toString(),
+                        sum = operationRow[OperationsTable.sum],
+                        category = operationRow[OperationsDataTable.category],
+                        sumOfCop = operationRow[OperationsDataTable.sumOfCom],
+                        type = operationRow[OperationsTypeTable.type],
+                    )
+                }.filter { it.type == type }
+        }
+    }
 }

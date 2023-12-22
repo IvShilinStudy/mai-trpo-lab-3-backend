@@ -5,6 +5,7 @@ import ru.ivn_sln.data.request.OperationUpdateRequest
 import ru.ivn_sln.data.response.OperationExtendedResponse
 import ru.ivn_sln.data.response.OperationResponse
 import ru.ivn_sln.data.response.RegUser
+import ru.ivn_sln.domain.models.OperationExtended
 
 interface RenderDataSource {
     suspend fun fetchOperations(token : String) : List<OperationResponse>
@@ -27,4 +28,10 @@ interface RenderDataSource {
         token: String,
         user: RegUser,
     )
+
+    suspend fun getOperationsExtended(
+        token: String,
+        type: String,
+        fromDate: String,
+    ) : List<OperationExtendedResponse>
 }
