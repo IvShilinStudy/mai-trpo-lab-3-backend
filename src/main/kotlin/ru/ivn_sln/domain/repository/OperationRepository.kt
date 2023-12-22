@@ -4,6 +4,7 @@ import ru.ivn_sln.data.request.OperationInsertRequest
 import ru.ivn_sln.data.request.OperationUpdateRequest
 import ru.ivn_sln.data.request.ReportCreateRequest
 import ru.ivn_sln.data.response.RegUser
+import ru.ivn_sln.data.response.ReportInfo
 import ru.ivn_sln.domain.models.Operation
 import ru.ivn_sln.domain.models.OperationExtended
 import ru.ivn_sln.tools.Resource
@@ -34,5 +35,5 @@ interface OperationRepository {
     suspend fun createReport(
         token : String,
         reportCreateRequest: ReportCreateRequest,
-    ) : Resource<Unit>
+    ) : Resource<ReportInfo>
 }

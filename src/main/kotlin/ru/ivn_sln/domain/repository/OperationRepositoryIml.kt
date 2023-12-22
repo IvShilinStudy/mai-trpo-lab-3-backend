@@ -73,8 +73,6 @@ class OperationRepositoryIml : OperationRepository, KoinComponent {
         val typeId = reportCreate.typeId
         val categoryId = reportCreate.categoryId
 
-
-
         when {
             typeId != null && categoryId == null -> {
                 dataSource.createReportFromType(

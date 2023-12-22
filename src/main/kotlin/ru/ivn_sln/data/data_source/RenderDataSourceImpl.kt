@@ -145,8 +145,8 @@ class RenderDataSourceImpl : RenderDataSource {
         typeId: Int,
         fromDate: Instant,
         toDate: Instant
-    ) {
-        transaction {
+    ) : ReportInfo{
+        return transaction {
             val operations = OperationsTable
                 .join(
                     OperationsCategoryTable,
@@ -212,6 +212,13 @@ class RenderDataSourceImpl : RenderDataSource {
                 it[this.toDate] = toDate
                 it[operationsCount] = count
             }
+
+            ReportInfo(
+                averageSum = averageSum,
+                mostProfitableOperationId = maxSumOfComPair.first,
+                leastProfitableOperationId = minSumOfComPair.first,
+                count = count
+            )
         }
     }
 
@@ -220,8 +227,8 @@ class RenderDataSourceImpl : RenderDataSource {
         categoryId: Int,
         fromDate: Instant,
         toDate: Instant
-    ) {
-        transaction {
+    ) : ReportInfo{
+        return transaction {
             val operations = OperationsTable
                 .join(
                     OperationsCategoryTable,
@@ -285,6 +292,13 @@ class RenderDataSourceImpl : RenderDataSource {
                 it[this.toDate] = toDate
                 it[operationsCount] = count
             }
+
+            ReportInfo(
+                averageSum = averageSum,
+                mostProfitableOperationId = maxSumOfComPair.first,
+                leastProfitableOperationId = minSumOfComPair.first,
+                count = count
+            )
         }
     }
 }
