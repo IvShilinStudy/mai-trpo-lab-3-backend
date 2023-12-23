@@ -301,4 +301,20 @@ class RenderDataSourceImpl : RenderDataSource {
             )
         }
     }
+
+    override suspend fun fetchReports(token: String): List<ReportInfo> {
+        return transaction {
+            OperationsReports
+                .select { OperationsReports.accountId.eq(token) }
+                .toList()
+                .map { row ->
+                    ReportInfo(
+                        averageSum = row[OperationsReports.averageSum],
+                        mostProfitableOperationId = row[OperationsReports.mostProfitableOperationId],
+                        leastProfitableOperationId = row[OperationsReports.leastProfitableOperationId],
+                        count = row[OperationsReports.operationsCount]
+                    )
+                }
+        }
+    }
 }
