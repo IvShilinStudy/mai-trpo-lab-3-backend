@@ -217,7 +217,10 @@ class RenderDataSourceImpl : RenderDataSource {
                 averageSum = averageSum,
                 mostProfitableOperationId = maxSumOfComPair.first,
                 leastProfitableOperationId = minSumOfComPair.first,
-                count = count
+                count = count,
+                fromDateString = fromDate.toString(),
+                toDateString = toDate.toString(),
+                id = 0,
             )
         }
     }
@@ -297,7 +300,10 @@ class RenderDataSourceImpl : RenderDataSource {
                 averageSum = averageSum,
                 mostProfitableOperationId = maxSumOfComPair.first,
                 leastProfitableOperationId = minSumOfComPair.first,
-                count = count
+                count = count,
+                fromDateString = fromDate.toString(),
+                toDateString = toDate.toString(),
+                id = 0,
             )
         }
     }
@@ -312,7 +318,10 @@ class RenderDataSourceImpl : RenderDataSource {
                         averageSum = row[OperationsReports.averageSum],
                         mostProfitableOperationId = row[OperationsReports.mostProfitableOperationId],
                         leastProfitableOperationId = row[OperationsReports.leastProfitableOperationId],
-                        count = row[OperationsReports.operationsCount]
+                        count = row[OperationsReports.operationsCount],
+                        fromDateString = row[OperationsReports.fromDate].toString(),
+                        toDateString = row[OperationsReports.toDate].toString(),
+                        id = row[OperationsReports.id],
                     )
                 }
         }
