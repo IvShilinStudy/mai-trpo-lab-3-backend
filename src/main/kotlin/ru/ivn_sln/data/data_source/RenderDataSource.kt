@@ -43,4 +43,8 @@ interface RenderDataSource {
         fromDate: Instant,
         toDate: Instant,
     ) : ReportInfo
+
+    suspend fun fetchReports(
+        token : String,
+    ) : List<ReportInfo>
 }

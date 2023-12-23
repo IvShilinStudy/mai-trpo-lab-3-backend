@@ -36,4 +36,8 @@ interface OperationRepository {
         token : String,
         reportCreateRequest: ReportCreateRequest,
     ) : Resource<ReportInfo>
+
+    suspend fun fetchReports(
+        token: String,
+    ) : Resource<List<ReportInfo>>
 }

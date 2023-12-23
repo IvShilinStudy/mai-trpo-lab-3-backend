@@ -147,4 +147,20 @@ fun Route.operationRoute() {
                 }
         }
     }
+
+    get("api/v1/{token}/report/fetch"){
+        val token = call.parameters["token"]
+
+        if (token == null) {
+            call.respond(HttpStatusCode.Unauthorized, "Auth token is null. Add it to headers")
+        } else {
+            repository.fetchReports(token)
+                .whenFailure { t ->
+                    call.respond(HttpStatusCode.BadRequest, t.message ?: "")
+                }
+                .whenSuccess { report ->
+                    call.respond(report)
+                }
+        }
+    }
 }

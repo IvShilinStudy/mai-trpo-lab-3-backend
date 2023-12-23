@@ -95,4 +95,8 @@ class OperationRepositoryIml : OperationRepository, KoinComponent {
             }
         }
     }
+
+    override suspend fun fetchReports(token: String)  = resource {
+        dataSource.fetchReports(token)
+    }
 }
